@@ -1,0 +1,412 @@
+[
+  [
+    "GCGID",
+    "Description",
+    "Graphic character"
+  ],
+  [
+    "LA010000",
+    "Latin small letter a",
+    "a"
+  ],
+  [
+    "LA020000",
+    "Latin capital letter A",
+    "A"
+  ],
+  [
+    "LB010000",
+    "Latin small letter b",
+    "b"
+  ],
+  [
+    "LB020000",
+    "Latin capital letter B",
+    "B"
+  ],
+  [
+    "LC010000",
+    "Latin small letter c",
+    "c"
+  ],
+  [
+    "LC020000",
+    "Latin capital letter C",
+    "C"
+  ],
+  [
+    "LD010000",
+    "Latin small letter d",
+    "d"
+  ],
+  [
+    "LD020000",
+    "Latin capital letter D",
+    "D"
+  ],
+  [
+    "LE010000",
+    "Latin small letter e",
+    "e"
+  ],
+  [
+    "LE020000",
+    "Latin capital letter E",
+    "E"
+  ],
+  [
+    "LF010000",
+    "Latin small letter f",
+    "f"
+  ],
+  [
+    "LF020000",
+    "Latin capital letter F",
+    "F"
+  ],
+  [
+    "LG010000",
+    "Latin small letter g",
+    "g"
+  ],
+  [
+    "LG020000",
+    "Latin capital letter G",
+    "G"
+  ],
+  [
+    "LH010000",
+    "Latin small letter h",
+    "h"
+  ],
+  [
+    "LH020000",
+    "Latin capital letter H",
+    "H"
+  ],
+  [
+    "LI010000",
+    "Latin small letter i",
+    "i"
+  ],
+  [
+    "LI020000",
+    "Latin capital letter I",
+    "I"
+  ],
+  [
+    "LJ010000",
+    "Latin small letter j",
+    "j"
+  ],
+  [
+    "LJ020000",
+    "Latin capital letter J",
+    "J"
+  ],
+  [
+    "LK010000",
+    "Latin small letter k",
+    "k"
+  ],
+  [
+    "LK020000",
+    "Latin capital letter K",
+    "K"
+  ],
+  [
+    "LL010000",
+    "Latin small letter l",
+    "l"
+  ],
+  [
+    "LL020000",
+    "Latin capital letter L",
+    "L"
+  ],
+  [
+    "LM010000",
+    "Latin small letter m",
+    "m"
+  ],
+  [
+    "LM020000",
+    "Latin capital letter M",
+    "M"
+  ],
+  [
+    "LN010000",
+    "Latin small letter n",
+    "n"
+  ],
+  [
+    "LN020000",
+    "Latin capital letter N",
+    "N"
+  ],
+  [
+    "LO010000",
+    "Latin small letter o",
+    "o"
+  ],
+  [
+    "LO020000",
+    "Latin capital letter O",
+    "O"
+  ],
+  [
+    "LP010000",
+    "Latin small letter p",
+    "p"
+  ],
+  [
+    "LP020000",
+    "Latin capital letter P",
+    "P"
+  ],
+  [
+    "LQ010000",
+    "Latin small letter q",
+    "q"
+  ],
+  [
+    "LQ020000",
+    "Latin capital letter Q",
+    "Q"
+  ],
+  [
+    "LR010000",
+    "Latin small letter r",
+    "r"
+  ],
+  [
+    "LR020000",
+    "Latin capital letter R",
+    "R"
+  ],
+  [
+    "LS010000",
+    "Latin small letter s",
+    "s"
+  ],
+  [
+    "LS020000",
+    "Latin capital letter S",
+    "S"
+  ],
+  [
+    "LT010000",
+    "Latin small letter t",
+    "t"
+  ],
+  [
+    "LT020000",
+    "Latin capital letter T",
+    "T"
+  ],
+  [
+    "LU010000",
+    "Latin small letter u",
+    "u"
+  ],
+  [
+    "LU020000",
+    "Latin capital letter U",
+    "U"
+  ],
+  [
+    "LV010000",
+    "Latin small letter v",
+    "v"
+  ],
+  [
+    "LV020000",
+    "Latin capital letter V",
+    "V"
+  ],
+  [
+    "LW010000",
+    "Latin small letter w",
+    "w"
+  ],
+  [
+    "LW020000",
+    "Latin capital letter W",
+    "W"
+  ],
+  [
+    "LX010000",
+    "Latin small letter x",
+    "x"
+  ],
+  [
+    "LX020000",
+    "Latin capital letter X",
+    "X"
+  ],
+  [
+    "LY010000",
+    "Latin small letter y",
+    "y"
+  ],
+  [
+    "LY020000",
+    "Latin capital letter Y",
+    "Y"
+  ],
+  [
+    "LZ010000",
+    "Latin small letter z",
+    "z"
+  ],
+  [
+    "LZ020000",
+    "Latin capital letter Z",
+    "Z"
+  ],
+  [
+    "ND100000",
+    "Arabic number zero",
+    "0"
+  ],
+  [
+    "ND010000",
+    "Arabic number one",
+    "1"
+  ],
+  [
+    "ND020000",
+    "Arabic number two",
+    "2"
+  ],
+  [
+    "ND030000",
+    "Arabic number three",
+    "3"
+  ],
+  [
+    "ND040000",
+    "Arabic number four",
+    "4"
+  ],
+  [
+    "ND050000",
+    "Arabic number five",
+    "5"
+  ],
+  [
+    "ND060000",
+    "Arabic number six",
+    "6"
+  ],
+  [
+    "ND070000",
+    "Arabic number seven",
+    "7"
+  ],
+  [
+    "ND080000",
+    "Arabic number eight",
+    "8"
+  ],
+  [
+    "ND090000",
+    "Arabic number nine",
+    "9"
+  ],
+  [
+    "SA010000",
+    "Plus sign",
+    "+"
+  ],
+  [
+    "SA030000",
+    "Less than sign",
+    "<"
+  ],
+  [
+    "SA040000",
+    "Equal sign",
+    "="
+  ],
+  [
+    "SA050000",
+    "Greater than sign",
+    ">"
+  ],
+  [
+    "SM020000",
+    "Percent sign",
+    "%"
+  ],
+  [
+    "SM030000",
+    "Ampersand",
+    "&"
+  ],
+  [
+    "SM040000",
+    "Asterisk",
+    "*"
+  ],
+  [
+    "SP040000",
+    "Straight quotation mark",
+    "\""
+  ],
+  [
+    "SP050000",
+    "Straight single quotation mark",
+    "'"
+  ],
+  [
+    "SP060000",
+    "Left parenthesis",
+    "("
+  ],
+  [
+    "SP070000",
+    "Right parenthesis",
+    ")"
+  ],
+  [
+    "SP080000",
+    "Comma",
+    ","
+  ],
+  [
+    "SP090000",
+    "Underscore",
+    "_"
+  ],
+  [
+    "SP100000",
+    "Hyphen",
+    "-"
+  ],
+  [
+    "SP110000",
+    "Period",
+    "."
+  ],
+  [
+    "SP120000",
+    "Slash right",
+    "/"
+  ],
+  [
+    "SP130000",
+    "Colon",
+    ":"
+  ],
+  [
+    "SP140000",
+    "Semicolon",
+    ";"
+  ],
+  [
+    "SP150000",
+    "Question mark",
+    "?"
+  ]
+]

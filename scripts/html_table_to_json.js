@@ -1,0 +1,1 @@
+console.log(JSON.stringify(Array.from(document.querySelectorAll('tr')).map(tr => Array.from(tr.children).map(ch => ch.innerText))))

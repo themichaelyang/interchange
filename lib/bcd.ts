@@ -1,3 +1,5 @@
+import { ParseError } from "./parse_error"
+
 type BoundsLiteral = [number, number]
 
 // inclusive range
@@ -25,10 +27,6 @@ class Int extends Number {
 class Maybe<T> {
   constructor(public val: T | Error) {}
   static new = (val: any) => new Maybe(val)
-}
-
-class ParseError extends Error {
-  static new = (...args: any[]) => new ParseError(...args)
 }
 
 function parse_bcd_digit(nibble: number) {

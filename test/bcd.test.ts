@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { parse_unsigned_packed_bcd } from "../bcd"
+import { parse_unsigned_packed_bcd } from "../lib/bcd"
 
 describe("packed bcd", () => {
   test("parsing", () => {
