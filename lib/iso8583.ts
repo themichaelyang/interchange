@@ -75,27 +75,32 @@ type RecordOf<T> = Record<string, T[keyof T]>
 //   [K in keyof T]: T[K] extends Function ? never : K
 // };
 
+class Spec {
+  // https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
+  // https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics
+  static unpack<T extends Spec>(this: new () => T, data: string): Decoded<T> {
+    const unpacked: RecordOf<Decoded<T>> = {}
+    const template = new this()
+    let index = 0
+
+    for (let entry of Object.entries(template)) {
+      const [name, field] = entry
+      unpacked[name] = field.decode(data.slice(index, index + field.length))
+      index += field.length
+    }
+
+    return unpacked as Decoded<T>
+  } 
+}
+
 // Start easy by using ASCII encoding
-export class AsciiMessage {
+export class AsciiMessage extends Spec {
   message_type_indicator = Field.new({
     length: 4,
     type: AsciiString.new()
   })
 
   static new = (...args: ConstructorParameters<typeof AsciiMessage>) => new AsciiMessage(...args)
-
-  static unpack(data: string): Decoded<AsciiMessage> {
-    const unpacked: RecordOf<Decoded<AsciiMessage>> = {}
-    let index = 0
-
-    for (let entry of Object.entries(AsciiMessage.new())) {
-      const [name, field] = entry
-      unpacked[name] = field.decode(data.slice(index, index + field.length))
-      index += field.length
-    }
-
-    return unpacked as Decoded<AsciiMessage>
-  }
 }
-
-// type fields = Fields<AsciiMessage>
+let type_check_1: Decoded<AsciiMessage> = AsciiMessage.unpack("")
+let type_check_2: {message_type_indicator: string} = AsciiMessage.unpack("")
