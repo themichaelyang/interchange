@@ -1,28 +1,5 @@
 import { ParseError } from "./parse_error"
-
-type BoundsLiteral = [number, number]
-
-// inclusive range
-class Bounds {
-  constructor(public min: number, public max: number) {}
-  
-  static new = (min: number, max: number) => 
-    new Bounds(min, max)
-  
-  static orLiteral = (b: Bounds | BoundsLiteral) =>
-    b instanceof Bounds ? b : Bounds.new(b[0], b[1])
-
-  to_a = () => [this.min, this.max]
-  includes = (n: number) => this.min <= n && n <= this.max
-}
-
-class Int extends Number {
-  constructor(public n: number) { super(n) }
-  static new = (n: number) => new Int(n)
-
-  within = (b: Bounds | BoundsLiteral) => 
-    Bounds.orLiteral(b).includes(this.valueOf())
-}
+import { Interval } from './interval'
 
 class Maybe<T> {
   constructor(public val: T | Error) {}
@@ -30,7 +7,7 @@ class Maybe<T> {
 }
 
 function parse_bcd_digit(nibble: number) {
-  if (!Bounds.new(0, 9).includes(nibble)) return ParseError.new('out of range')
+  if (!Interval.new(0, 9).includes(nibble)) return ParseError.new('out of range')
   return nibble
 }
 
