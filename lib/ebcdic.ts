@@ -1,4 +1,4 @@
-import { ParseError } from "./parse_error";
+import { ParseError } from "./errors";
 
 // https://www.ibm.com/docs/en/i/7.1.0?topic=sets-invariant-character-set
 // http://www.bitsavers.org/pdf/ibm/370/referenceCard/GX20-1850-7_System_370_Reference_Summary_Feb89.pdf

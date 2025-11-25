@@ -1,4 +1,4 @@
-import { ParseError } from "./parse_error"
+import { ParseError } from "./errors"
 import { Interval } from './interval'
 
 class Maybe<T> {

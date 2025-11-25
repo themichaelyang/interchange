@@ -9,6 +9,8 @@
 // so LL = 1 byte (2 packed unsigned BCD) and LLL = 2 byte (3 packed unsigned BCD + 1 padding nibble of 0x0)
 // whereas in ASCII: LL = 2 bytes (2 ASCII numerals), LLL = 3 bytes (3 ASCII numerals)
 
+import { ParseError } from "./errors"
+
 class Bytes extends Uint8Array {
 
 }
@@ -45,6 +47,84 @@ class AsciiString implements FieldCodec<string, string> {
   encode = (decoded: string, length: number) => decoded.slice(0, length)
   decode = (encoded: string, _length: number) => encoded
 }
+// enum MessageTypeIndicatorVersion {
+//   ISO_8583_1987 = "ISO_8583_1987",
+//   ISO_8583_1993 = "ISO_8583_1993",
+//   ISO_8583_2003 = "ISO_8583_2003",
+//   Reserved = "Reserved",
+//   NationalUse = "NationalUse",
+//   PrivateUse = "PrivateUse"
+// }
+
+// namespace MessageTypeIndicatorVersion {
+//   export const from_s = (str: string): MessageTypeIndicatorVersion => {
+//     if (str == "0") return MessageTypeIndicatorVersion.ISO_8583_1987
+//     else if (str == "1") return MessageTypeIndicatorVersion.ISO_8583_1993
+//     else if (str == "2") return MessageTypeIndicatorVersion.ISO_8583_2003
+//     else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7") 
+//       return MessageTypeIndicatorVersion.Reserved
+//     else if (str == "8") return MessageTypeIndicatorVersion.NationalUse
+//     else if (str == "9") return MessageTypeIndicatorVersion.PrivateUse
+//     else throw Error("Invalid message type indicator version")
+//   }
+// }
+
+class MessageTypeIndicator {
+  constructor(
+    public version: MessageTypeIndicator.Version, 
+    public message_class: string, 
+    public message_function: string, 
+    public message_origin: string
+  ) {}
+
+  static new = (version: MessageTypeIndicator.Version, message_class: string, message_function: string, message_origin: string) => new MessageTypeIndicator(version, message_class, message_function, message_origin)
+  static from_s = (str: string): MessageTypeIndicator => {
+    if (str.length !== 4) throw Error("Message type indicator must be 4 characters long")
+    const [version_digit, message_class_digit, message_function_digit, message_origin_digit] = str.split('') as [string, string, string, string]
+
+    return MessageTypeIndicator.new(
+      MessageTypeIndicator.Version.from_s(version_digit),
+      message_class_digit,
+      message_function_digit,
+      message_origin_digit
+    )
+  }
+  to_s = () => ""
+}
+
+namespace MessageTypeIndicator {
+  type Versions = "ISO 8583:1987" | "ISO 8583:1993" | "ISO 8583:2003" | "Reserved" | "National use" | "Private use"
+
+  export class Version {
+    constructor(public version: Versions, public value: string) {}
+    static new = (version: Versions, value: string) => new Version(version, value)
+
+    static from_s = (str: string): Version => {
+      if (str == "0") return Version.new("ISO 8583:1987", "0")
+      else if (str == "1") return Version.new("ISO 8583:1993", "1")
+      else if (str == "2") return Version.new("ISO 8583:2003", "2")
+      else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7") 
+        return Version.new("Reserved", str)
+      else if (str == "8") return Version.new("National use", "8")
+      else if (str == "9") return Version.new("Private use", "9")
+      // TODO: return instead of throw!
+      else throw ParseError.new("Invalid message type indicator version")
+    }
+  }
+
+  // export class MessageClass {
+  //   constructor(public message_class: string) {}
+  //   static new = (message_class: string) => new MessageClass(message_class)
+  // }
+}
+
+class AsciiMessageTypeIndicator implements FieldCodec<string, string, MessageTypeIndicator> {
+  encode = AsciiString.prototype.encode
+  decode = AsciiString.prototype.decode
+
+  interpret = (decoded: string): MessageTypeIndicator => MessageTypeIndicator.from_s(decoded)
+  translate = (interpreted: MessageTypeIndicator): string => interpreted.to_s()
+}
 
 // Two steps are:
 // 1. unpack
@@ -80,10 +160,10 @@ class Spec {
   // https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics
   static unpack<T extends Spec>(this: new () => T, data: string): Decoded<T> {
     const unpacked: RecordOf<Decoded<T>> = {}
-    const template = new this()
+    const klass = new this()
     let index = 0
 
-    for (let entry of Object.entries(template)) {
+    for (let entry of Object.entries(klass)) {
       const [name, field] = entry
       unpacked[name] = field.decode(data.slice(index, index + field.length))
       index += field.length
@@ -94,13 +174,18 @@ class Spec {
 }
 
 // Start easy by using ASCII encoding
+// TODO: add graceful error handling / partial parsing
 export class AsciiMessage extends Spec {
   message_type_indicator = Field.new({
     length: 4,
     type: AsciiString.new()
   })
 
+  // primary_bitmap = Field.new(
+  //   length: 4,
+  //   type: HexBitmap.new()
+  // )
+
   static new = (...args: ConstructorParameters<typeof AsciiMessage>) => new AsciiMessage(...args)
 }
-let type_check_1: Decoded<AsciiMessage> = AsciiMessage.unpack("")
-let type_check_2: {message_type_indicator: string} = AsciiMessage.unpack("")
+const _type_check: Decoded<AsciiMessage> = AsciiMessage.unpack("")
