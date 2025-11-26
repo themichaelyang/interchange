@@ -126,23 +126,44 @@ class AsciiMessageTypeIndicator implements FieldCodec<string, string, MessageTyp
   translate = (interpreted: MessageTypeIndicator): string => interpreted.to_s()
 }
 
+interface FieldCondition {
+  check: () => boolean
+  register: (condition: boolean) => boolean
+}
+
 // Two steps are:
 // 1. unpack
 // 2. into domain object
-class Field<E, D> {
-  public length
-  public type: FieldCodec<E, D>
+
+// T defaults to FieldCodec<E, D> if not provided
+// Otherwise, T is generic and can narrow the FieldCodec type
+class Field<E, D, T extends FieldCodec<E, D> = FieldCodec<E, D>> {
+  public length: number
+  public type: T
+  public condition?: FieldCondition
   
-  constructor({length, type}: {
+  constructor({length, type, condition}: {
     length: number, 
-    type: FieldCodec<E, D>
+    type: T,
+    condition?: FieldCondition
   }) {
     this.length = length
     this.type = type
+    this.condition = condition
   }
 
   decode = (encoded: E): D => this.type.decode(encoded, this.length)
-  static new = <E, D>(...args: ConstructorParameters<typeof Field<E, D>>) => new Field(...args)
+
+  // infer unpacks the type from the generic and binds to a type variable
+  static new = <NT extends FieldCodec<any, any>>(args: {
+    length: number,
+    type: NT,
+    condition?: FieldCondition
+  }): Field<
+    NT extends FieldCodec<infer NE, any> ? NE : never,
+    NT extends FieldCodec<any, infer ND> ? ND : never,
+    NT
+  > => new Field(args as any)
 }
 
 type Decoded<T> = {
@@ -169,9 +190,12 @@ class Spec {
     let index = 0
 
     for (let entry of Object.entries(klass)) {
-      const [name, field] = entry
-      unpacked[name] = field.decode(data.slice(index, index + field.length))
-      index += field.length
+      const [name, field]: [string, Field<any, any>] = entry
+
+      if (field.condition?.check() ?? true) {
+        unpacked[name] = field.decode(data.slice(index, index + field.length))
+        index += field.length
+      }
     }
 
     return unpacked as Decoded<T>
@@ -197,6 +221,15 @@ export class Bitmap {
   constructor(public bools: boolean[]) {}
   static new = (bools: boolean[]) => new Bitmap(bools)
 
+  // These are methods not anonymous functions so that Bitmap equality works as expected.
+  // TODO: change most arrow functions to methods in classes
+  at(index: number) {
+    return this.bools[index]
+  }
+  set(index: number, value: boolean) {
+    return this.bools[index] = value
+  }
+
   to_bytes(): Uint8Array {
     return List.new(this.bools).each_cons(8).reduce((bytes, cons) => {
       let byte = 0
@@ -221,6 +254,13 @@ export class Bitmap {
   }
 }
 
+class BitmapCondition implements FieldCondition {
+  constructor(public index: number, public codec: HexBitmap) {}
+
+  check = () => this.codec.bitmap.at(this.index) || false
+  register = (condition: boolean) => this.codec.bitmap.set(this.index, condition)
+}
+
 class HexBitmap implements FieldCodec<string, Bitmap> {
   public bitmap: Bitmap = Bitmap.new([])
   static new = () => new HexBitmap()
@@ -232,6 +272,9 @@ class HexBitmap implements FieldCodec<string, Bitmap> {
   decode = (encoded: string, _length: number) => {
     return this.bitmap = Bitmap.from_bytes(Uint8Array.fromHex(encoded))
   }
+
+  // TODO: call the condition when encoding?
+  at = (index: number): BitmapCondition => new BitmapCondition(index, this)
 }
 
 // Start easy by using ASCII encoding
@@ -244,12 +287,17 @@ export class AsciiMessage extends Spec {
 
   // problem: when creating an ascii message, bitmap needs to be aware of other fields
   primary_bitmap = Field.new({
-    length: 4,
+    length: 16,
     type: HexBitmap.new()
   })
-  //   length: 4,
-  //   type: HexBitmap.new()
-  // })
+
+  // interpretation -> value -> data: sets index of primary bitmap
+  // data -> value -> interpretation: gets index of primary bitmap
+  secondary_bitmap = Field.new({
+    condition: this.primary_bitmap.type.at(0),
+    length: 16,
+    type: HexBitmap.new()
+  })
 
   static new = (...args: ConstructorParameters<typeof AsciiMessage>) => new AsciiMessage(...args)
 }

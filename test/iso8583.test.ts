@@ -12,7 +12,7 @@ describe("ACSII ISO8583", () => {
     ).toEqual("0200")
   })
 
-  test("parses primary bitmap", () => {
+  test("parses primary bitmap on its own", () => {
     expect(
       AsciiMessage.get_singleton().primary_bitmap.decode("F4570004A41100F8")
     ).toEqual(Bitmap.new([
@@ -33,5 +33,55 @@ describe("ACSII ISO8583", () => {
       1, 1, 1, 1,
       1, 0, 0, 0,
     ].map(b => !!b)))
+  })
+
+  test("ignores secondary bitmap if first bit of primary bitmap is 0", () => {
+    expect(
+      AsciiMessage.unpack("020074570004A41100F835001180C0100000").secondary_bitmap
+    ).toBeUndefined()
+  })
+
+  test("parses primary and secondary bitmap", () => {
+    const parsed =AsciiMessage.unpack("0200F4570004A41100F835001180C0100000")
+
+    expect(parsed.primary_bitmap)
+      .toEqual(Bitmap.new([
+        1, 1, 1, 1,
+        0, 1, 0, 0,
+        0, 1, 0, 1,
+        0, 1, 1, 1,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 1, 0, 0,
+        1, 0, 1, 0,
+        0, 1, 0, 0,
+        0, 0, 0, 1,
+        0, 0, 0, 1,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        1, 1, 1, 1,
+        1, 0, 0, 0,
+      ].map(b => !!b)))
+
+    expect(parsed.secondary_bitmap.bools)
+      .toEqual(Bitmap.new([
+        0, 0, 1, 1,
+        0, 1, 0, 1,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 1,
+        0, 0, 0, 1,
+        1, 0, 0, 0,
+        0, 0, 0, 0,
+        1, 1, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 1,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+      ].map(b => !!b)).bools)
   })
 }) 
