@@ -10,8 +10,8 @@ describe('ascii_to_ebcdic', () => {
 describe('parse_alphanumeric_ebcdic', () => {
   test('round trip conversion', () => {
     expect(parse_alphanumeric_ebcdic(Uint8Array.from(ascii_to_ebcdic('hello world'))))
-      .toBe('hello world')
+      .toBe('hello world') 
     expect(parse_alphanumeric_ebcdic(Uint8Array.from(ascii_to_ebcdic('abcdefghijklmnopqrztuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456790'))))
       .toBe('abcdefghijklmnopqrztuvABCDEFGHIJKLMNOPQRSTUVWXYZ0123456790')
   })
-})
+})  

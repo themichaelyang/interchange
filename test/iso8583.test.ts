@@ -4,6 +4,7 @@ import { AsciiMessage, Bitmap } from "../lib/iso8583"
 
 describe("ACSII ISO8583", () => {
   const financial_transaction = "0200323A40010841801038000000000000000004200508050113921208050420042251320720 000010000001156040800411 01251146333156336000299"
+  const reversal = "0400F23A40010841820200000040000000001911111111100000000001800000000000300000 908064651003316134519090809096010060002000000000003430003948 0380811001200000409656573320000000300000136003000331700039480908064651000000 0003132020000331609080645190000000020000000000000"
 
   test("parses message type identifier", () => {
     console.log(AsciiMessage.unpack(financial_transaction))
@@ -83,5 +84,9 @@ describe("ACSII ISO8583", () => {
         0, 0, 0, 0,
         0, 0, 0, 0,
       ].map(b => !!b)).bools)
+  })
+
+  test("parses primary account number", () => {
+    expect(AsciiMessage.unpack(reversal).primary_account_number).toBe("1111111110000000000")
   })
 }) 

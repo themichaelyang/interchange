@@ -10,6 +10,7 @@
 // whereas in ASCII: LL = 2 bytes (2 ASCII numerals), LLL = 3 bytes (3 ASCII numerals)
 
 import { ParseError } from "./errors"
+import { Int } from './interval'
 
 class Bytes extends Uint8Array {
 
@@ -19,9 +20,10 @@ class Bytes extends Uint8Array {
 // 2. value -> data (encode, pack)
 // 3. value -> interpretation (interpret)
 // 4. interpretation -> value (translate)
+
 interface FieldCodec<E, D, I=D> {
   encode: (decoded: D, length: number) => E,
-  decode: (encoded: E, length: number) => D
+  decode: (encoded: E) => D
   interpret?: (decoded: D) => I
   translate?: (interpreted: I) => D
 }
@@ -39,13 +41,13 @@ class AsciiNumber implements FieldCodec<string, number> {
   static new = (...args: ConstructorParameters<typeof AsciiNumber>) => new AsciiNumber(...args)
 
   encode = (decoded: number, length: number) => decoded.toString().padStart(length, '0')
-  decode = (encoded: string, _length: number) => parseInt(encoded)
+  decode = (encoded: string) => parseInt(encoded)
 }
 
 class AsciiString implements FieldCodec<string, string> {
   static new = (...args: ConstructorParameters<typeof AsciiString>) => new AsciiString(...args)
   encode = (decoded: string, length: number) => decoded.slice(0, length)
-  decode = (encoded: string, _length: number) => encoded
+  decode = (encoded: string) => encoded
 }
 // enum MessageTypeIndicatorVersion {
 //   ISO_8583_1987 = "ISO_8583_1987",
@@ -131,6 +133,30 @@ interface FieldCondition {
   register: (condition: boolean) => boolean
 }
 
+interface LengthCodec<E> {
+  decode: (encoded: E) => number
+  encode: (length: number) => E
+  // TODO: hope there are no variable size lengths, then will have weird lookahead logic
+  size: number
+}
+
+class AsciiVariableLength implements LengthCodec<string> {
+  constructor(public size: number) {}
+  static new = (size: number) => new AsciiVariableLength(size)
+
+  decode(encoded: string) { 
+    return parseInt(encoded) 
+  }
+  encode(length: number) { 
+    // TODO: validate size?
+    return length.toString().padStart(this.size, '0')
+  }
+}
+
+class AsciiLLVAR {
+  static new = () => new AsciiVariableLength(2)
+}
+
 // Two steps are:
 // 1. unpack
 // 2. into domain object
@@ -138,12 +164,12 @@ interface FieldCondition {
 // T defaults to FieldCodec<E, D> if not provided
 // Otherwise, T is generic and can narrow the FieldCodec type
 class Field<E, D, T extends FieldCodec<E, D> = FieldCodec<E, D>> {
-  public length: number
+  public length: number | LengthCodec<any>
   public type: T
   public condition?: FieldCondition
   
   constructor({length, type, condition}: {
-    length: number, 
+    length: number | LengthCodec<any>,
     type: T,
     condition?: FieldCondition
   }) {
@@ -152,11 +178,13 @@ class Field<E, D, T extends FieldCodec<E, D> = FieldCodec<E, D>> {
     this.condition = condition
   }
 
-  decode = (encoded: E): D => this.type.decode(encoded, this.length)
+  decode(encoded: E): D { 
+    return this.type.decode(encoded)
+  }
 
   // infer unpacks the type from the generic and binds to a type variable
   static new = <NT extends FieldCodec<any, any>>(args: {
-    length: number,
+    length: number | LengthCodec<any>,
     type: NT,
     condition?: FieldCondition
   }): Field<
@@ -193,8 +221,16 @@ class Spec {
       const [name, field]: [string, Field<any, any>] = entry
 
       if (field.condition?.check() ?? true) {
-        unpacked[name] = field.decode(data.slice(index, index + field.length))
-        index += field.length
+        let field_length
+
+        if (Int.is_int(field.length)) {
+          field_length = field.length
+        } else {
+          field_length = field.length.decode(data.slice(index, index + field.length.size))
+          index += field.length.size
+        }
+        unpacked[name] = field.decode(data.slice(index, index + field_length))
+        index += field_length
       }
     }
 
@@ -269,17 +305,26 @@ class HexBitmap implements FieldCodec<string, Bitmap> {
   encode = (decoded: Bitmap, length: number) => {
     return decoded.to_bytes().toHex()
   }
-  decode = (encoded: string, _length: number) => {
+  decode = (encoded: string) => {
     return this.bitmap = Bitmap.from_bytes(Uint8Array.fromHex(encoded))
   }
 
   // TODO: call the condition when encoding?
+  // TODO: validate unique index?
   at = (index: number): BitmapCondition => new BitmapCondition(index, this)
+
+
+  // TOOD: the field number will look weird once we have a secondary bitmap (since indexing starts over).
+  // maybe it is smart and can figure out when the index is out of range and modulo to the right bitmap offset?
+  // ideally bitmap will have the length stored. right now it's stored in the field.
+  // TODO: should the length be an instance variable on the codec?
+  field = (field_number: number) => this.at(field_number - 1)
 }
 
 // Start easy by using ASCII encoding
 // TODO: add graceful error handling / partial parsing
 export class AsciiMessage extends Spec { 
+  // TODO: replace Field.new with a DSL function?
   message_type_indicator = Field.new({
     length: 4,
     type: AsciiString.new()
@@ -297,6 +342,13 @@ export class AsciiMessage extends Spec {
     condition: this.primary_bitmap.type.at(0),
     length: 16,
     type: HexBitmap.new()
+  })
+
+  primary_account_number = Field.new({
+    condition: this.primary_bitmap.type.field(2),
+    // TODO: Field.new could call .new() or new or constructor for you
+    length: AsciiLLVAR.new(),
+    type: AsciiString.new()
   })
 
   static new = (...args: ConstructorParameters<typeof AsciiMessage>) => new AsciiMessage(...args)

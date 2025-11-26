@@ -38,4 +38,8 @@ export class Int extends Number {
     x = Int.from(x)
     return [Math.floor(this.n / x.n), this.n % x.n]
   }
+
+  static is_int(x: unknown): x is number {
+    return Number.isInteger(x)
+  }
 }

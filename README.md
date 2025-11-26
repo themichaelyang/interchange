@@ -1,5 +1,7 @@
 # interchange
 
+Declarative ISO 8583 codec!
+
 some goals and ideas:
 - staged parsing
   - permissive parsing of fields into data (e.g. issuer parsing messages from acquirers)
