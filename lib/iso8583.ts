@@ -156,6 +156,11 @@ type RecordOf<T> = Record<string, T[keyof T]>
 // };
 
 class Spec {
+  static _singleton: any
+  static get_singleton<T extends Spec>(this: typeof Spec & (new () => T)): T {
+    return (this._singleton as T) ||= new this()
+  }
+
   // https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
   // https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics
   static unpack<T extends Spec>(this: new () => T, data: string): Decoded<T> {
@@ -173,18 +178,78 @@ class Spec {
   } 
 }
 
+class List<T> {
+  constructor(public arr: T[]) {}
+  static new = <T>(arr: T[]) => new List(arr)
+  
+  each_cons(size: number): T[][] {
+    return this.arr.reduce((result, item, index) => {
+      if (index % size === 0) {
+        result.push([])
+      }
+      result[result.length - 1]!.push(item)
+      return result
+    }, [] as T[][])
+  }
+}
+
+export class Bitmap {
+  constructor(public bools: boolean[]) {}
+  static new = (bools: boolean[]) => new Bitmap(bools)
+
+  to_bytes(): Uint8Array {
+    return List.new(this.bools).each_cons(8).reduce((bytes, cons) => {
+      let byte = 0
+      for (let bit of cons) {
+        byte <<= 1
+        byte |= bit ? 0x80 : 0x00
+      }
+      bytes[bytes.length] = byte
+      return bytes
+    }, Uint8Array.from([]))
+  }
+
+  static from_bytes(bytes: Uint8Array): Bitmap {
+    const bools = []
+    for (let byte of bytes) {
+      for (let i = 0; i < 8; i++) {
+        bools.push((byte & 0x80) !== 0)
+        byte <<= 1
+      }
+    }
+    return Bitmap.new(bools)
+  }
+}
+
+class HexBitmap implements FieldCodec<string, Bitmap> {
+  public bitmap: Bitmap = Bitmap.new([])
+  static new = () => new HexBitmap()
+
+  // TODO: use the stateful decoded bitmap
+  encode = (decoded: Bitmap, length: number) => {
+    return decoded.to_bytes().toHex()
+  }
+  decode = (encoded: string, _length: number) => {
+    return this.bitmap = Bitmap.from_bytes(Uint8Array.fromHex(encoded))
+  }
+}
+
 // Start easy by using ASCII encoding
 // TODO: add graceful error handling / partial parsing
-export class AsciiMessage extends Spec {
+export class AsciiMessage extends Spec { 
   message_type_indicator = Field.new({
     length: 4,
     type: AsciiString.new()
   })
 
-  // primary_bitmap = Field.new(
+  // problem: when creating an ascii message, bitmap needs to be aware of other fields
+  primary_bitmap = Field.new({
+    length: 4,
+    type: HexBitmap.new()
+  })
   //   length: 4,
   //   type: HexBitmap.new()
-  // )
+  // })
 
   static new = (...args: ConstructorParameters<typeof AsciiMessage>) => new AsciiMessage(...args)
 }
