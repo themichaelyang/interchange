@@ -3,7 +3,7 @@
 // ISO defines the fields, but encoding is up to specific spec you are implementing.
 // Some, like Visa, use a binary encoding: a binary bitmap, binary uint for length, binary BCD for MTI, and EBCDIC for (most) alphanumerics.
 // Some use ASCII: the bitmap is represented as hex encoded in ASCII, length as ASCII number, etc..
-// https://j8583.sourceforge.net/desc8583en.html 
+// https://j8583.sourceforge.net/desc8583en.html
 //
 // number of Ls in LLVAR and LLLVAR indicate the range of decimal digits that the variable length supports. Binary encoding is more compact,
 // so LL = 1 byte (2 packed unsigned BCD) and LLL = 2 byte (3 packed unsigned BCD + 1 padding nibble of 0x0)
@@ -63,7 +63,7 @@ class AsciiString implements FieldCodec<string, string> {
 //     if (str == "0") return MessageTypeIndicatorVersion.ISO_8583_1987
 //     else if (str == "1") return MessageTypeIndicatorVersion.ISO_8583_1993
 //     else if (str == "2") return MessageTypeIndicatorVersion.ISO_8583_2003
-//     else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7") 
+//     else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7")
 //       return MessageTypeIndicatorVersion.Reserved
 //     else if (str == "8") return MessageTypeIndicatorVersion.NationalUse
 //     else if (str == "9") return MessageTypeIndicatorVersion.PrivateUse
@@ -73,9 +73,9 @@ class AsciiString implements FieldCodec<string, string> {
 
 class MessageTypeIndicator {
   constructor(
-    public version: MessageTypeIndicator.Version, 
-    public message_class: string, 
-    public message_function: string, 
+    public version: MessageTypeIndicator.Version,
+    public message_class: string,
+    public message_function: string,
     public message_origin: string
   ) {}
 
@@ -105,7 +105,7 @@ namespace MessageTypeIndicator {
       if (str == "0") return Version.new("ISO 8583:1987", "0")
       else if (str == "1") return Version.new("ISO 8583:1993", "1")
       else if (str == "2") return Version.new("ISO 8583:2003", "2")
-      else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7") 
+      else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7")
         return Version.new("Reserved", str)
       else if (str == "8") return Version.new("National use", "8")
       else if (str == "9") return Version.new("Private use", "9")
@@ -144,10 +144,10 @@ class AsciiVariableLength implements LengthCodec<string> {
   constructor(public size: number) {}
   static new = (size: number) => new AsciiVariableLength(size)
 
-  decode(encoded: string) { 
-    return parseInt(encoded) 
+  decode(encoded: string) {
+    return parseInt(encoded)
   }
-  encode(length: number) { 
+  encode(length: number) {
     // TODO: validate size?
     return length.toString().padStart(this.size, '0')
   }
@@ -167,7 +167,7 @@ class Field<E, D, T extends FieldCodec<E, D> = FieldCodec<E, D>> {
   public length: number | LengthCodec<any>
   public type: T
   public condition?: FieldCondition
-  
+
   constructor({length, type, condition}: {
     length: number | LengthCodec<any>,
     type: T,
@@ -178,7 +178,7 @@ class Field<E, D, T extends FieldCodec<E, D> = FieldCodec<E, D>> {
     this.condition = condition
   }
 
-  decode(encoded: E): D { 
+  decode(encoded: E): D {
     return this.type.decode(encoded)
   }
 
@@ -212,9 +212,9 @@ class Spec {
 
   // https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
   // https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics
-  static unpack<T extends Spec>(this: new () => T, data: string): Decoded<T> {
+  static unpack<T extends Spec>(this: typeof Spec & (new () => T), data: string): Decoded<T> {
     const unpacked: RecordOf<Decoded<T>> = {}
-    const klass = new this()
+    const klass = this.get_singleton()
     let index = 0
 
     for (let entry of Object.entries(klass)) {
@@ -235,13 +235,13 @@ class Spec {
     }
 
     return unpacked as Decoded<T>
-  } 
+  }
 }
 
 class List<T> {
   constructor(public arr: T[]) {}
   static new = <T>(arr: T[]) => new List(arr)
-  
+
   each_cons(size: number): T[][] {
     return this.arr.reduce((result, item, index) => {
       if (index % size === 0) {
@@ -323,7 +323,7 @@ class HexBitmap implements FieldCodec<string, Bitmap> {
 
 // Start easy by using ASCII encoding
 // TODO: add graceful error handling / partial parsing
-export class AsciiMessage extends Spec { 
+export class AsciiMessage extends Spec {
   // TODO: replace Field.new with a DSL function?
   message_type_indicator = Field.new({
     length: 4,
