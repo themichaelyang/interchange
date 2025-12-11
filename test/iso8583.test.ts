@@ -89,4 +89,8 @@ describe("ACSII ISO8583", () => {
   test("parses primary account number", () => {
     expect(AsciiMessage.unpack(reversal).primary_account_number).toBe("1111111110000000000")
   })
-}) 
+
+  test("parses transaction amount", () => {
+    expect(AsciiMessage.unpack(financial_transaction).transaction_amount).toBe(380000000000)
+  })
+})

@@ -351,6 +351,12 @@ export class AsciiMessage extends Spec {
     type: AsciiString.new()
   })
 
+  transaction_amount = Field.new({
+    condition: this.primary_bitmap.type.field(4),
+    length: 12,
+    type: AsciiNumber.new()
+  })
+
   static new = (...args: ConstructorParameters<typeof AsciiMessage>) => new AsciiMessage(...args)
 }
 const _type_check: Decoded<AsciiMessage> = AsciiMessage.unpack("")
