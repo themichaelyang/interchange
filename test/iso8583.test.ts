@@ -65,7 +65,7 @@ describe("ACSII ISO8583", () => {
         1, 0, 0, 0,
       ].map(b => !!b)))
 
-    expect(parsed.secondary_bitmap.bools)
+    expect(parsed.secondary_bitmap?.bools)
       .toEqual(Bitmap.new([
         0, 0, 1, 1,
         0, 1, 0, 1,

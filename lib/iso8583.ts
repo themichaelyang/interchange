@@ -45,8 +45,12 @@ class AsciiLLVAR {
   static new = () => new AsciiVariableLength(2)
 }
 
+type NullableIfConditional<C, T> = C extends FieldCondition ? T | null : T
+
 type Decoded<T> = {
-  [K in keyof T]: T[K] extends Field<any, any> ? ReturnType<T[K]['type']['decode']> : never
+  [K in keyof T]: T[K] extends Field<any, any, any, infer Cond> ?
+    NullableIfConditional<Cond, ReturnType<T[K]['type']['decode']>> :
+    never
 };
 
 type RecordOf<T> = Record<string, T[keyof T]>
@@ -65,7 +69,7 @@ class Spec {
     let index = 0
 
     for (let entry of Object.entries(klass)) {
-      const [name, field]: [string, Field<any, any>] = entry
+      const [name, field]: [string, Field<any, any, any>] = entry
 
       if (field.condition?.check() ?? true) {
         let field_length
@@ -83,6 +87,12 @@ class Spec {
 
     return unpacked as Decoded<T>
   }
+
+  // static pack<T extends Spec>(
+  //   this: typeof Spec & (new () => T),
+  //   params: Prettify<Decoded<T>>): void {
+
+  // }
 }
 
 class List<T> {
@@ -205,4 +215,8 @@ export class AsciiMessage extends Spec {
 
   static new = (...args: ConstructorParameters<typeof AsciiMessage>) => new AsciiMessage(...args)
 }
-const _type_check: Decoded<AsciiMessage> = AsciiMessage.unpack("")
+const _type_check: Prettify<Decoded<AsciiMessage>> = AsciiMessage.unpack("")
+
+type Prettify<T> = {
+  [K in keyof T]: T[K]
+} & {}
