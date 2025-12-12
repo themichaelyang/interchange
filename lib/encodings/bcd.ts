@@ -1,5 +1,5 @@
-import { ParseError } from "./errors"
-import { Interval } from './interval'
+import { ParseError } from "../errors"
+import { Interval } from '../interval'
 
 class Maybe<T> {
   constructor(public val: T | Error) {}
