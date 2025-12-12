@@ -1,5 +1,9 @@
 import { Interval } from "./interval"
 
+// 1. data -> value (decode, unpack)
+// 2. value -> data (encode, pack)
+// 3. value -> interpretation (interpret)
+// 4. interpretation -> value (translate)
 export interface FieldCodec<E, D, I=D> {
   encode: (decoded: D, length: number) => E,
   decode: (encoded: E) => D
@@ -7,6 +11,7 @@ export interface FieldCodec<E, D, I=D> {
   translate?: (interpreted: I) => D
 }
 
+// FieldCondition indicates whether or not a field should be included
 export interface FieldCondition {
   check: () => boolean
   register: (condition: boolean) => boolean

@@ -43,7 +43,7 @@ describe("ACSII ISO8583", () => {
   })
 
   test("parses primary and secondary bitmap", () => {
-    const parsed =AsciiMessage.unpack("0200F4570004A41100F835001180C0100000")
+    const parsed = AsciiMessage.unpack("0200F4570004A41100F835001180C0100000")
 
     expect(parsed.primary_bitmap)
       .toEqual(Bitmap.new([

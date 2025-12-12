@@ -14,21 +14,6 @@ import { Int } from './interval'
 import type { FieldCodec, LengthCodec, FieldCondition } from './field'
 import { Field } from './field'
 
-// 1. data -> value (decode, unpack)
-// 2. value -> data (encode, pack)
-// 3. value -> interpretation (interpret)
-// 4. interpretation -> value (translate)
-
-
-
-// class BCD implements FieldCodec<Bytes, number> {
-//   encode: (decoded: number) => {
-
-//   }
-//   decode: (encoded: Bytes) => {
-
-//   }
-// }
 
 class AsciiNumber implements FieldCodec<string, number> {
   static new = (...args: ConstructorParameters<typeof AsciiNumber>) => new AsciiNumber(...args)
@@ -41,84 +26,6 @@ class AsciiString implements FieldCodec<string, string> {
   static new = (...args: ConstructorParameters<typeof AsciiString>) => new AsciiString(...args)
   encode = (decoded: string, length: number) => decoded.slice(0, length)
   decode = (encoded: string) => encoded
-}
-// enum MessageTypeIndicatorVersion {
-//   ISO_8583_1987 = "ISO_8583_1987",
-//   ISO_8583_1993 = "ISO_8583_1993",
-//   ISO_8583_2003 = "ISO_8583_2003",
-//   Reserved = "Reserved",
-//   NationalUse = "NationalUse",
-//   PrivateUse = "PrivateUse"
-// }
-
-// namespace MessageTypeIndicatorVersion {
-//   export const from_s = (str: string): MessageTypeIndicatorVersion => {
-//     if (str == "0") return MessageTypeIndicatorVersion.ISO_8583_1987
-//     else if (str == "1") return MessageTypeIndicatorVersion.ISO_8583_1993
-//     else if (str == "2") return MessageTypeIndicatorVersion.ISO_8583_2003
-//     else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7")
-//       return MessageTypeIndicatorVersion.Reserved
-//     else if (str == "8") return MessageTypeIndicatorVersion.NationalUse
-//     else if (str == "9") return MessageTypeIndicatorVersion.PrivateUse
-//     else throw Error("Invalid message type indicator version")
-//   }
-// }
-
-class MessageTypeIndicator {
-  constructor(
-    public version: MessageTypeIndicator.Version,
-    public message_class: string,
-    public message_function: string,
-    public message_origin: string
-  ) {}
-
-  static new = (version: MessageTypeIndicator.Version, message_class: string, message_function: string, message_origin: string) => new MessageTypeIndicator(version, message_class, message_function, message_origin)
-  static from_s = (str: string): MessageTypeIndicator => {
-    if (str.length !== 4) throw Error("Message type indicator must be 4 characters long")
-    const [version_digit, message_class_digit, message_function_digit, message_origin_digit] = str.split('') as [string, string, string, string]
-
-    return MessageTypeIndicator.new(
-      MessageTypeIndicator.Version.from_s(version_digit),
-      message_class_digit,
-      message_function_digit,
-      message_origin_digit
-    )
-  }
-  to_s = () => ""
-}
-
-namespace MessageTypeIndicator {
-  type Versions = "ISO 8583:1987" | "ISO 8583:1993" | "ISO 8583:2003" | "Reserved" | "National use" | "Private use"
-
-  export class Version {
-    constructor(public version: Versions, public value: string) {}
-    static new = (version: Versions, value: string) => new Version(version, value)
-
-    static from_s = (str: string): Version => {
-      if (str == "0") return Version.new("ISO 8583:1987", "0")
-      else if (str == "1") return Version.new("ISO 8583:1993", "1")
-      else if (str == "2") return Version.new("ISO 8583:2003", "2")
-      else if (str == "3" || str == "4" || str == "5" || str == "6" || str == "7")
-        return Version.new("Reserved", str)
-      else if (str == "8") return Version.new("National use", "8")
-      else if (str == "9") return Version.new("Private use", "9")
-      // TODO: return instead of throw!
-      else throw ParseError.new("Invalid message type indicator version")
-    }
-  }
-
-  // export class MessageClass {
-  //   constructor(public message_class: string) {}
-  //   static new = (message_class: string) => new MessageClass(message_class)
-  // }
-}
-
-class AsciiMessageTypeIndicator implements FieldCodec<string, string, MessageTypeIndicator> {
-  encode = AsciiString.prototype.encode
-  decode = AsciiString.prototype.decode
-
-  interpret = (decoded: string): MessageTypeIndicator => MessageTypeIndicator.from_s(decoded)
-  translate = (interpreted: MessageTypeIndicator): string => interpreted.to_s()
 }
 
 class AsciiVariableLength implements LengthCodec<string> {
@@ -138,19 +45,11 @@ class AsciiLLVAR {
   static new = () => new AsciiVariableLength(2)
 }
 
-// Two steps are:
-// 1. unpack
-// 2. into domain object
-
 type Decoded<T> = {
   [K in keyof T]: T[K] extends Field<any, any> ? ReturnType<T[K]['type']['decode']> : never
 };
 
 type RecordOf<T> = Record<string, T[keyof T]>
-
-// type Fields<T> = {
-//   [K in keyof T]: T[K] extends Function ? never : K
-// };
 
 class Spec {
   static _singleton: any
@@ -260,7 +159,6 @@ class HexBitmap implements FieldCodec<string, Bitmap> {
   // TODO: call the condition when encoding?
   // TODO: validate unique index?
   at = (index: number): BitmapCondition => new BitmapCondition(index, this)
-
 
   // TOOD: the field number will look weird once we have a secondary bitmap (since indexing starts over).
   // maybe it is smart and can figure out when the index is out of range and modulo to the right bitmap offset?
