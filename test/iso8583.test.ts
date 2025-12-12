@@ -93,4 +93,12 @@ describe("ACSII ISO8583", () => {
   test("parses transaction amount", () => {
     expect(AsciiMessage.unpack(financial_transaction).transaction_amount).toBe(380000000000)
   })
+
+  test("roundtrips", () => {
+    let parsed = AsciiMessage.unpack(financial_transaction)
+    // console.log(parsed)
+    console.log(parsed.primary_bitmap.to_bytes())
+    let reserialized = AsciiMessage.pack(parsed)
+    expect(reserialized).toBe(financial_transaction)
+  })
 })

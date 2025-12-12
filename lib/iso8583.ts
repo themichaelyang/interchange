@@ -18,7 +18,10 @@ import { Field } from './field'
 class AsciiNumber implements FieldCodec<string, number> {
   static new = (...args: ConstructorParameters<typeof AsciiNumber>) => new AsciiNumber(...args)
 
-  encode = (decoded: number, length: number) => decoded.toString().padStart(length, '0')
+  encode(decoded: number, length?: number) {
+    let encoded = decoded.toString()
+    return encoded.padStart(length || encoded.length, '0')
+  }
   decode = (encoded: string) => parseInt(encoded)
 }
 
@@ -88,11 +91,32 @@ class Spec {
     return unpacked as Decoded<T>
   }
 
-  // static pack<T extends Spec>(
-  //   this: typeof Spec & (new () => T),
-  //   params: Prettify<Decoded<T>>): void {
+  // TODO: change Enc type to string or buffer?
+  // technically that is already true in unpack() but the types pass because
+  // its untyped
+  static pack<T extends Spec, P extends object = Prettify<Decoded<T>>>(
+    this: typeof Spec & (new () => T),
+    params: P
+  ): string {
+    const klass = this.get_singleton()
+    const strings = []
 
-  // }
+    for (let entry of Object.entries(klass)) {
+      const [name, field]: [string, Field<any, any, any>] = entry
+      if (name in params) {
+        let encoded = field.encode(params[name as keyof P])
+
+        if (!Int.is_int(field.length)) {
+          let encoded_length = field.length.encode(encoded.length)
+          strings.push(encoded_length)
+        }
+
+        strings.push(encoded)
+      }
+    }
+
+    return strings.join('')
+  }
 }
 
 class List<T> {
@@ -124,15 +148,15 @@ export class Bitmap {
   }
 
   to_bytes(): Uint8Array {
-    return List.new(this.bools).each_cons(8).reduce((bytes, cons) => {
+    return Uint8Array.from(List.new(this.bools).each_cons(8).reduce((bytes, cons) => {
       let byte = 0
       for (let bit of cons) {
         byte <<= 1
-        byte |= bit ? 0x80 : 0x00
+        byte |= bit ? 1 : 0
       }
-      bytes[bytes.length] = byte
+      bytes.push(byte)
       return bytes
-    }, Uint8Array.from([]))
+    }, [] as Array<number>))
   }
 
   static from_bytes(bytes: Uint8Array): Bitmap {
@@ -159,10 +183,11 @@ class HexBitmap implements FieldCodec<string, Bitmap> {
   static new = () => new HexBitmap()
 
   // TODO: use the stateful decoded bitmap
-  encode = (decoded: Bitmap, length: number) => {
-    return decoded.to_bytes().toHex()
+  encode(decoded: Bitmap, _length?: number) {
+    console.log(decoded.to_bytes().toHex().toUpperCase())
+    return decoded.to_bytes().toHex().toUpperCase()
   }
-  decode = (encoded: string) => {
+  decode(encoded: string) {
     return this.bitmap = Bitmap.from_bytes(Uint8Array.fromHex(encoded))
   }
 
@@ -181,6 +206,7 @@ class HexBitmap implements FieldCodec<string, Bitmap> {
 // TODO: add graceful error handling / partial parsing
 export class AsciiMessage extends Spec {
   // TODO: replace Field.new with a DSL function?
+  // or could invoke InstanceOf for me instead of .new()
   message_type_indicator = Field.new({
     length: 4,
     type: AsciiString.new()
