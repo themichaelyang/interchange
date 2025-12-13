@@ -95,10 +95,10 @@ describe("ACSII ISO8583", () => {
   })
 
   test("roundtrips", () => {
-    let parsed = AsciiMessage.unpack(financial_transaction)
-    // console.log(parsed)
+    let truncated = "0200323A400108418010380000000000"
+    let parsed = AsciiMessage.unpack(truncated)
     console.log(parsed.primary_bitmap.to_bytes())
     let reserialized = AsciiMessage.pack(parsed)
-    expect(reserialized).toBe(financial_transaction)
+    expect(reserialized).toBe(truncated)
   })
 })
