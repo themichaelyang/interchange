@@ -15,7 +15,7 @@ describe("ACSII ISO8583", () => {
 
   test("parses primary bitmap on its own", () => {
     expect(
-      AsciiMessage.get_singleton().primary_bitmap.decode("F4570004A41100F8")
+      AsciiMessage.new().primary_bitmap.decode("F4570004A41100F8")
     ).toEqual(Bitmap.new([
       1, 1, 1, 1,
       0, 1, 0, 0,
@@ -105,17 +105,24 @@ describe("ACSII ISO8583", () => {
   })
 
   test("sets bitmap correctly when packing", () => {
-    console.log(AsciiMessage.pack({
+    let primary_bitmap = AsciiMessage.unpack(AsciiMessage.pack({
       message_type_indicator: "0100",
-      primary_bitmap: Bitmap.new(Array(64).fill(false)), // this isn't used
+      primary_bitmap: Bitmap.new([]), // this isn't used
       secondary_bitmap: null,
       primary_account_number: "4242424242424242",
-      processing_code: 0,
-      transaction_amount: 100,
-      settlement_amount: 100,
-      cardholder_billing_amount: 100,
-      transmission_datetime: null,
-      cardholder_billing_fee_amount: 10
-    }))
+      processing_code: null,
+      transaction_amount: null,
+      settlement_amount: 1,
+      cardholder_billing_amount: null,
+      transmission_datetime: 2,
+      cardholder_billing_fee_amount: null
+    })).primary_bitmap
+
+    let expected_bitmap = Array(64).fill(false)
+    expected_bitmap[1] = true // primary account number
+    expected_bitmap[4] = true // settlement amount
+    expected_bitmap[6] = true // transmission datetime
+
+    expect(primary_bitmap).toEqual(Bitmap.new(expected_bitmap))
   })
 })
