@@ -107,7 +107,7 @@ describe("ACSII ISO8583", () => {
   test("sets bitmap correctly when packing", () => {
     console.log(AsciiMessage.pack({
       message_type_indicator: "0100",
-      primary_bitmap: Bitmap.new(Array(64).fill(false)),
+      primary_bitmap: Bitmap.new(Array(64).fill(false)), // this isn't used
       secondary_bitmap: null,
       primary_account_number: "4242424242424242",
       processing_code: 0,

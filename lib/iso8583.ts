@@ -66,16 +66,19 @@ type Compact<T> = {
 type RecordOf<T> = Record<string, T[keyof T]>
 
 class Spec {
-  static _singleton: any
-  static get_singleton<T extends Spec>(this: typeof Spec & (new () => T)): T {
-    return (this._singleton as T) ||= new this()
-  }
+  // singleton is causing issue on multiple calls, since bitmap fields are stateful
+
+  // static _singleton: any
+  // static get_singleton<T extends Spec>(this: typeof Spec & (new () => T)): T {
+  //   return (this._singleton as T) ||= new this()
+  // }
 
   // https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
   // https://www.typescriptlang.org/docs/handbook/2/generics.html#using-class-types-in-generics
   static unpack<T extends Spec>(this: typeof Spec & (new () => T), data: string): Decoded<T> {
     const unpacked: RecordOf<Decoded<T>> = {}
-    const klass = this.get_singleton()
+    // const klass = this.get_singleton()
+    const klass = new this()
     let index = 0
 
     for (let entry of Object.entries(klass)) {
@@ -107,23 +110,37 @@ class Spec {
     this: typeof Spec & (new () => T),
     params: Decoded<T>
   ): string {
-    const klass = this.get_singleton()
+    // const klass = this.get_singleton()
+    const klass = new this()
     const strings = []
+    const stateful = {} as Record<string, any>
 
     for (let entry of Object.entries(klass)) {
       const [name, field]: [string, Field<any, any, any>] = entry
+
       if (name in params && params[name as keyof T] != null) {
         field.condition?.register(true)
         console.log(name, params[name as keyof T])
+      }
+
+      // TODO: special casing bitmaps for now -- should this be a new interface
+      // like StatefulFieldCodec or have another indicator on the type?
+      // if the field is the constructor (and not the instance) this could be easier
+      if (field.type instanceof HexBitmap) {
+        stateful[name] = field.type.bitmap
       }
     }
 
     for (let entry of Object.entries(klass)) {
       const [name, field]: [string, Field<any, any, any>] = entry
       if (name in params && params[name as keyof T] != null) {
+        let value = stateful[name] || params[name as keyof T]
+        console.log(name, value)
+
         // This won't work for bitmaps, which are stateful. The value is stored
         // on the field instance itself (also means we might not want a singleton).
-        let encoded = field.encode(params[name as keyof Decoded<T>])
+        // let encoded = field.encode(params[name as keyof Decoded<T>])
+        let encoded = field.encode(value)
 
         if (!Int.is_int(field.length)) {
           let encoded_length = field.length.encode(encoded.length)
@@ -202,8 +219,12 @@ class BitmapCondition implements FieldCondition {
 }
 
 class HexBitmap implements FieldCodec<string, Bitmap> {
-  public bitmap: Bitmap = Bitmap.new([])
-  static new = () => new HexBitmap()
+  public bitmap: Bitmap = Bitmap.new(Array(64).fill(false))
+  static new = () => {
+    let obj = new HexBitmap()
+    console.log(obj.bitmap)
+    return obj
+  }
 
   // TODO: use the stateful decoded bitmap
   encode(decoded: Bitmap, _length?: number) {
