@@ -56,6 +56,13 @@ type Decoded<T> = {
     never
 };
 
+// TODO: make types optional, not just never or undefined
+// requires splitting into to types, making the nullable ones mapped with +?
+// then merging
+type Compact<T> = {
+  [K in keyof T]: null extends T[K] ? never : T[K]
+}
+
 type RecordOf<T> = Record<string, T[keyof T]>
 
 class Spec {
@@ -83,7 +90,9 @@ class Spec {
           field_length = field.length.decode(data.slice(index, index + field.length.size))
           index += field.length.size
         }
-        unpacked[name] = field.decode(data.slice(index, index + field_length))
+        let raw = data.slice(index, index + field_length)
+        // unpacked[name] = { raw: raw, value: field.decode(raw) }
+        unpacked[name] = field.decode(raw)
         index += field_length
       }
     }
@@ -94,17 +103,27 @@ class Spec {
   // TODO: change Enc type to string or buffer?
   // technically that is already true in unpack() but the types pass because
   // its untyped
-  static pack<T extends Spec, P extends object = Prettify<Decoded<T>>>(
+  static pack<T extends Spec>(
     this: typeof Spec & (new () => T),
-    params: P
+    params: Decoded<T>
   ): string {
     const klass = this.get_singleton()
     const strings = []
 
     for (let entry of Object.entries(klass)) {
       const [name, field]: [string, Field<any, any, any>] = entry
-      if (name in params) {
-        let encoded = field.encode(params[name as keyof P])
+      if (name in params && params[name as keyof T] != null) {
+        field.condition?.register(true)
+        console.log(name, params[name as keyof T])
+      }
+    }
+
+    for (let entry of Object.entries(klass)) {
+      const [name, field]: [string, Field<any, any, any>] = entry
+      if (name in params && params[name as keyof T] != null) {
+        // This won't work for bitmaps, which are stateful. The value is stored
+        // on the field instance itself (also means we might not want a singleton).
+        let encoded = field.encode(params[name as keyof Decoded<T>])
 
         if (!Int.is_int(field.length)) {
           let encoded_length = field.length.encode(encoded.length)
@@ -172,10 +191,14 @@ export class Bitmap {
 }
 
 class BitmapCondition implements FieldCondition {
-  constructor(public index: number, public codec: HexBitmap) {}
+  constructor(public index: number, public codec: HexBitmap) { }
 
   check = () => this.codec.bitmap.at(this.index) || false
-  register = (condition: boolean) => this.codec.bitmap.set(this.index, condition)
+  register = (condition: boolean) => {
+    console.log(this.index)
+    console.log(this.codec.bitmap)
+    return this.codec.bitmap.set(this.index, condition)
+  }
 }
 
 class HexBitmap implements FieldCodec<string, Bitmap> {
@@ -233,9 +256,41 @@ export class AsciiMessage extends Spec {
     type: AsciiString.new()
   })
 
+  processing_code = Field.new({
+    condition: this.primary_bitmap.type.field(3),
+    length: 6,
+    type: AsciiNumber.new()
+  })
+
   transaction_amount = Field.new({
     condition: this.primary_bitmap.type.field(4),
     length: 12,
+    type: AsciiNumber.new()
+  })
+
+  settlement_amount = Field.new({
+    condition: this.primary_bitmap.type.field(5),
+    length: 12,
+    type: AsciiNumber.new()
+  })
+
+  cardholder_billing_amount = Field.new({
+    condition: this.primary_bitmap.type.field(6),
+    length: 12,
+    type: AsciiNumber.new()
+  })
+
+  transmission_datetime = Field.new({
+    condition: this.primary_bitmap.type.field(7),
+    length: 10,
+    // TODO: make a datetime
+    type: AsciiNumber.new()
+  })
+
+  cardholder_billing_fee_amount = Field.new({
+    condition: this.primary_bitmap.type.field(8),
+    length: 8,
+    // TODO: make a datetime
     type: AsciiNumber.new()
   })
 

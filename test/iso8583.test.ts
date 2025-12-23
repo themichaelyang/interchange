@@ -95,10 +95,27 @@ describe("ACSII ISO8583", () => {
   })
 
   test("roundtrips", () => {
-    let truncated = "0200323A400108418010380000000000"
+    let truncated = "0200323A4001084180103800000000000000000420050805"
+    // let truncated = financial_transaction
     let parsed = AsciiMessage.unpack(truncated)
-    console.log(parsed.primary_bitmap.to_bytes())
+    console.log(parsed)
+    // console.log(parsed.primary_bitmap.to_bytes())
     let reserialized = AsciiMessage.pack(parsed)
     expect(reserialized).toBe(truncated)
+  })
+
+  test("sets bitmap correctly when packing", () => {
+    console.log(AsciiMessage.pack({
+      message_type_indicator: "0100",
+      primary_bitmap: Bitmap.new(Array(64).fill(false)),
+      secondary_bitmap: null,
+      primary_account_number: "4242424242424242",
+      processing_code: 0,
+      transaction_amount: 100,
+      settlement_amount: 100,
+      cardholder_billing_amount: 100,
+      transmission_datetime: null,
+      cardholder_billing_fee_amount: 10
+    }))
   })
 })

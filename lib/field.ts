@@ -70,7 +70,8 @@ export class Field<
   // since the encoding of the length may be different
   // than the encoding of the field
   encode(decoded: Dec): Enc {
-    return this.type.encode(decoded, Int.is_int(this.length) ? this.length : undefined)
+    let provided_length = Int.is_int(this.length) ? this.length : undefined
+    return this.type.encode(decoded, provided_length)
   }
 
   // static method infers the generic types and binds them to class
